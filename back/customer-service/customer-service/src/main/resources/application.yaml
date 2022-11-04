@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: customer-service
+  datasource:
+    username: 'postgres2'
+    url: jdbc:postgresql://customers-postgresdb.cx9fv45tjcrx.us-east-1.rds.amazonaws.com:5432/customers
+    password: 'postgres2'
+    jpa:
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+      hibernate:
+        ddl-auto: update
+      show-sql: true
+    flyway:
+      url: jdbc:postgresql://customers-postgresdb.cx9fv45tjcrx.us-east-1.rds.amazonaws.com:5432/customers
+      user: 'postgres2'
+      password: 'postgres2'
+cloud:
+  aws:
+    credentials:
+      access-key:
+      secret-key:
+    region:
+      static: 'us-east-1'
+    end-point:
+      url-send:
+      url-receive:
