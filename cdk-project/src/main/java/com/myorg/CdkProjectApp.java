@@ -11,6 +11,7 @@ public class CdkProjectApp {
         App app = new App();
 
         String accessId = (String) app.getNode().tryGetContext("accessId");
+        String secret = (String) app.getNode().tryGetContext("secret");
         String region = (String) app.getNode().tryGetContext("region");
 
         new ScheduleServiceStack(app, "bet-app-schedule-service", StackProps.builder()
