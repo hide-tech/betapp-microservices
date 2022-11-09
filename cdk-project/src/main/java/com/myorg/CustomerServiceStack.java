@@ -24,14 +24,15 @@ public class CustomerServiceStack extends Stack {
     private final String postgresPass = "postgresPass";
     private final String databaseName = "customers";
 
-    private String secretKey = "po";
-    private String orderQueueUrl = "OrderQueue";
-
     public CustomerServiceStack(final Construct scope, final String id) {
-        this(scope, id, null);
+        this(scope, id, null, null, null);
     }
 
-    public CustomerServiceStack(final Construct scope, final String id, final StackProps props) {
+    public CustomerServiceStack(final Construct scope,
+                                final String id,
+                                final StackProps props,
+                                final String orderQueueUrl,
+                                final String secretKey) {
         super(scope, id, props);
 
         Queue queue = new Queue(this, "CustomerQueue", QueueProps.builder()

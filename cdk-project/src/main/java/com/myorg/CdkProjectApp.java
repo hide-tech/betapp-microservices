@@ -3,6 +3,8 @@ package com.myorg;
 import software.amazon.awscdk.App;
 import software.amazon.awscdk.Environment;
 import software.amazon.awscdk.StackProps;
+import software.amazon.awscdk.services.sqs.Queue;
+import software.amazon.awscdk.services.sqs.QueueProps;
 
 import java.util.Arrays;
 
@@ -14,6 +16,13 @@ public class CdkProjectApp {
         String secret = (String) app.getNode().tryGetContext("secret");
         String region = (String) app.getNode().tryGetContext("region");
 
+        Queue orderQueue = new Queue(app, "orderQueue", QueueProps.builder()
+                .queueName("OrderQueue")
+                .contentBasedDeduplication(true)
+                .fifo(true)
+                .build());
+        String orderQueueUrl = orderQueue.getQueueUrl();
+
         new ScheduleServiceStack(app, "bet-app-schedule-service", StackProps.builder()
                 .env(Environment.builder().account(accessId).region(region).build())
                 .build());
@@ -22,9 +31,9 @@ public class CdkProjectApp {
                 .env(Environment.builder().account(accessId).region(region).build())
                 .build());
 
-        new CustomerServiceStack(app, "bet-app-ustomer-service", StackProps.builder()
+        new CustomerServiceStack(app, "bet-app-сustomer-service", StackProps.builder()
                 .env(Environment.builder().account(accessId).region(region).build())
-                .build());
+                .build(), orderQueueUrl, secret);
 
         new PaymentServiceStack(app, "bet-app-payment-service", StackProps.builder()
                 .env(Environment.builder().account(accessId).region(region).build())
