@@ -10,30 +10,31 @@ public class CdkProjectApp {
     public static void main(final String[] args) {
         App app = new App();
 
-        new CdkProjectStack(app, "CdkProjectStack", StackProps.builder()
-                // If you don't specify 'env', this stack will be environment-agnostic.
-                // Account/Region-dependent features and context lookups will not work,
-                // but a single synthesized template can be deployed anywhere.
+        String accessId = (String) app.getNode().tryGetContext("accessId");
+        String region = (String) app.getNode().tryGetContext("region");
 
-                // Uncomment the next block to specialize this stack for the AWS Account
-                // and Region that are implied by the current CLI configuration.
-                /*
-                .env(Environment.builder()
-                        .account(System.getenv("CDK_DEFAULT_ACCOUNT"))
-                        .region(System.getenv("CDK_DEFAULT_REGION"))
-                        .build())
-                */
+        new ScheduleServiceStack(app, "bet-app-schedule-service", StackProps.builder()
+                .env(Environment.builder().account(accessId).region(region).build())
+                .build());
 
-                // Uncomment the next block if you know exactly what Account and Region you
-                // want to deploy the stack to.
-                /*
-                .env(Environment.builder()
-                        .account("123456789012")
-                        .region("us-east-1")
-                        .build())
-                */
+        new OddsServiceStack(app, "bet-app-odds-service", StackProps.builder()
+                .env(Environment.builder().account(accessId).region(region).build())
+                .build());
 
-                // For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
+        new CustomerServiceStack(app, "bet-app-ustomer-service", StackProps.builder()
+                .env(Environment.builder().account(accessId).region(region).build())
+                .build());
+
+        new PaymentServiceStack(app, "bet-app-payment-service", StackProps.builder()
+                .env(Environment.builder().account(accessId).region(region).build())
+                .build());
+
+        new ResultServiceStack(app, "bet-app-result-service", StackProps.builder()
+                .env(Environment.builder().account(accessId).region(region).build())
+                .build());
+
+        new OrderServiceStack(app, "bet-app-order-service", StackProps.builder()
+                .env(Environment.builder().account(accessId).region(region).build())
                 .build());
 
         app.synth();
