@@ -42,13 +42,15 @@ public class CdkProjectApp {
                 .build(), orderQueueUrl, secret);
         String customerQueueUrl = customerServiceStack.customerQueueUrl;
 
-        new PaymentServiceStack(app, "bet-app-payment-service", StackProps.builder()
+        PaymentServiceStack paymentServiceStack = new PaymentServiceStack(app, "bet-app-payment-service", StackProps.builder()
                 .env(environment)
-                .build());
+                .build(), orderQueueUrl, secret);
+        String paymentQueueUrl = paymentServiceStack.paymentQueueUrl;
 
-        new ResultServiceStack(app, "bet-app-result-service", StackProps.builder()
+        ResultServiceStack resultServiceStack = new ResultServiceStack(app, "bet-app-result-service", StackProps.builder()
                 .env(environment)
-                .build());
+                .build(), orderQueueUrl, secret);
+        String resultQueueUrl = resultServiceStack.resultQueueUrl;
 
         new OrderServiceStack(app, "bet-app-order-service", StackProps.builder()
                 .env(environment)
