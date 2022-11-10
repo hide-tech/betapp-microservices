@@ -37,7 +37,7 @@ public class ScheduleServiceStack extends Stack {
                 .natGateways(1)
                 .build());
 
-        DatabaseInstance customerDb = new DatabaseInstance(this, "schedule-database",
+        DatabaseInstance scheduleDB = new DatabaseInstance(this, "schedule-database",
                 DatabaseInstanceProps.builder()
                         .engine(DatabaseInstanceEngine.postgres(PostgresInstanceEngineProps.builder()
                                 .version(PostgresEngineVersion.VER_13_7)
@@ -49,7 +49,7 @@ public class ScheduleServiceStack extends Stack {
                         .credentials(Credentials.fromPassword(schedulePostgresUsername, SecretValue.plainText(schedulePostgresPass)))
                         .build());
 
-        String dbInstanceSocketAddress = customerDb.getInstanceEndpoint().getSocketAddress();
+        String dbInstanceSocketAddress = scheduleDB.getInstanceEndpoint().getSocketAddress();
         String dbConnectUri = "jdbc:postgresql://" + dbInstanceSocketAddress + "/" + scheduleDatabaseName;
 
         Cluster cluster = new Cluster(this, "schedule-service-cluster", ClusterProps.builder()

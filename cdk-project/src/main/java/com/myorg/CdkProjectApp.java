@@ -16,6 +16,11 @@ public class CdkProjectApp {
         String secret = (String) app.getNode().tryGetContext("secret");
         String region = (String) app.getNode().tryGetContext("region");
 
+        Environment environment = Environment.builder()
+                .account(accessId)
+                .region(region)
+                .build();
+
         Queue orderQueue = new Queue(app, "orderQueue", QueueProps.builder()
                 .queueName("OrderQueue")
                 .contentBasedDeduplication(true)
@@ -24,27 +29,29 @@ public class CdkProjectApp {
         String orderQueueUrl = orderQueue.getQueueUrl();
 
         new ScheduleServiceStack(app, "bet-app-schedule-service", StackProps.builder()
-                .env(Environment.builder().account(accessId).region(region).build())
+                .env(environment)
                 .build(), secret);
 
-        new OddsServiceStack(app, "bet-app-odds-service", StackProps.builder()
-                .env(Environment.builder().account(accessId).region(region).build())
-                .build());
-
-        new CustomerServiceStack(app, "bet-app-сustomer-service", StackProps.builder()
-                .env(Environment.builder().account(accessId).region(region).build())
+        OddsServiceStack oddsServiceStack = new OddsServiceStack(app, "bet-app-odds-service", StackProps.builder()
+                .env(environment)
                 .build(), orderQueueUrl, secret);
+        String oddsQueueUrl = oddsServiceStack.oddsQueueUrl;
+
+        CustomerServiceStack customerServiceStack = new CustomerServiceStack(app, "bet-app-сustomer-service", StackProps.builder()
+                .env(environment)
+                .build(), orderQueueUrl, secret);
+        String customerQueueUrl = customerServiceStack.customerQueueUrl;
 
         new PaymentServiceStack(app, "bet-app-payment-service", StackProps.builder()
-                .env(Environment.builder().account(accessId).region(region).build())
+                .env(environment)
                 .build());
 
         new ResultServiceStack(app, "bet-app-result-service", StackProps.builder()
-                .env(Environment.builder().account(accessId).region(region).build())
+                .env(environment)
                 .build());
 
         new OrderServiceStack(app, "bet-app-order-service", StackProps.builder()
-                .env(Environment.builder().account(accessId).region(region).build())
+                .env(environment)
                 .build());
 
         app.synth();

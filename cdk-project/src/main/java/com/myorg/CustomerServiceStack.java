@@ -23,6 +23,7 @@ public class CustomerServiceStack extends Stack {
     private final String customerPostgresUsername = "postgresUser";
     private final String customerPostgresPass = "postgresPass";
     private final String customerDatabaseName = "customers";
+    public String customerQueueUrl;
 
     public CustomerServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null, null);
@@ -41,7 +42,7 @@ public class CustomerServiceStack extends Stack {
                 .queueName("CustomerQueue")
                 .build());
 
-        String queueUrl = queue.getQueueUrl();
+        this.customerQueueUrl = queue.getQueueUrl();
 
         Vpc vpc = new Vpc(this, "customer-service-vpc", VpcProps.builder()
                 .maxAzs(1)
@@ -77,7 +78,7 @@ public class CustomerServiceStack extends Stack {
                 "CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount(),
                 "CLOUD_AWS_CREDENTIALS_SECRET-KEY", secretKey,
                 "CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion(),
-                "CLOUD_AWS_END-POINT_URL-RECEIVE", queueUrl);
+                "CLOUD_AWS_END-POINT_URL-RECEIVE", customerQueueUrl);
         containerEnv.put("CLOUD_AWS_END-POINT_URL-SEND", orderQueueUrl);
 
         ApplicationLoadBalancedFargateService serviceApp = new ApplicationLoadBalancedFargateService(
