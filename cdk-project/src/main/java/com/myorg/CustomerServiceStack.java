@@ -20,9 +20,9 @@ import java.util.Map;
 
 public class CustomerServiceStack extends Stack {
 
-    private final String postgresUsername = "postgresUser";
-    private final String postgresPass = "postgresPass";
-    private final String databaseName = "customers";
+    private final String customerPostgresUsername = "postgresUser";
+    private final String customerPostgresPass = "postgresPass";
+    private final String customerDatabaseName = "customers";
 
     public CustomerServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null, null);
@@ -43,7 +43,7 @@ public class CustomerServiceStack extends Stack {
 
         String queueUrl = queue.getQueueUrl();
 
-        Vpc vpcDB = new Vpc(this, "customer-service-vpc-db", VpcProps.builder()
+        Vpc vpc = new Vpc(this, "customer-service-vpc", VpcProps.builder()
                 .maxAzs(1)
                 .natGateways(1)
                 .build());
@@ -54,31 +54,26 @@ public class CustomerServiceStack extends Stack {
                                         .version(PostgresEngineVersion.VER_13_7)
                                 .build()))
                         .instanceType(InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MICRO))
-                        .vpc(vpcDB)
+                        .vpc(vpc)
                         .allocatedStorage(200)
-                        .databaseName(databaseName)
-                        .credentials(Credentials.fromPassword(postgresUsername, SecretValue.plainText(postgresPass)))
+                        .databaseName(customerDatabaseName)
+                        .credentials(Credentials.fromPassword(customerPostgresUsername, SecretValue.plainText(customerPostgresPass)))
                         .build());
 
         String dbInstanceSocketAddress = customerDb.getInstanceEndpoint().getSocketAddress();
-        String dbConnectUri = "jdbc:postgresql://" + dbInstanceSocketAddress + "/" + databaseName;
-
-        Vpc vpcService = new Vpc(this, "customer-service-vpc", VpcProps.builder()
-                .maxAzs(2)
-                .natGateways(1)
-                .build());
+        String dbConnectUri = "jdbc:postgresql://" + dbInstanceSocketAddress + "/" + customerDatabaseName;
 
         Cluster cluster = new Cluster(this, "customer-service-cluster", ClusterProps.builder()
                 .clusterName("customerServiceCluster")
-                .vpc(vpcService)
+                .vpc(vpc)
                 .build());
 
         Map<String, String> containerEnv = Map.of("SPRING_DATASOURCE_URL",dbConnectUri,
-                "SPRING_DATASOURCE_USERNAME", postgresUsername,
-                "SPRING_DATASOURCE_PASSWORD", postgresPass,
+                "SPRING_DATASOURCE_USERNAME", customerPostgresUsername,
+                "SPRING_DATASOURCE_PASSWORD", customerPostgresPass,
                 "SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri,
-                "SPRING_DATASOURCE_FLYWAY_USER", postgresUsername,
-                "SPRING_DATASOURCE_FLYWAY_PASSWORD", postgresPass,
+                "SPRING_DATASOURCE_FLYWAY_USER", customerPostgresUsername,
+                "SPRING_DATASOURCE_FLYWAY_PASSWORD", customerPostgresPass,
                 "CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount(),
                 "CLOUD_AWS_CREDENTIALS_SECRET-KEY", secretKey,
                 "CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion(),

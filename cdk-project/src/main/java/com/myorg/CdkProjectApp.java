@@ -25,7 +25,7 @@ public class CdkProjectApp {
 
         new ScheduleServiceStack(app, "bet-app-schedule-service", StackProps.builder()
                 .env(Environment.builder().account(accessId).region(region).build())
-                .build());
+                .build(), secret);
 
         new OddsServiceStack(app, "bet-app-odds-service", StackProps.builder()
                 .env(Environment.builder().account(accessId).region(region).build())
