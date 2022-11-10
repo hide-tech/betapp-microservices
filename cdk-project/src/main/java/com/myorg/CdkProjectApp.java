@@ -52,9 +52,10 @@ public class CdkProjectApp {
                 .build(), orderQueueUrl, secret);
         String resultQueueUrl = resultServiceStack.resultQueueUrl;
 
-        new OrderServiceStack(app, "bet-app-order-service", StackProps.builder()
+        OrderServiceStack orderServiceStack = new OrderServiceStack(app, "bet-app-order-service", StackProps.builder()
                 .env(environment)
-                .build());
+                .build(),
+                orderQueueUrl, oddsQueueUrl, customerQueueUrl, paymentQueueUrl, resultQueueUrl, secret);
 
         app.synth();
     }
