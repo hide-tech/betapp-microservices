@@ -12,6 +12,7 @@ import software.amazon.awscdk.services.elasticloadbalancingv2.HealthCheck;
 import software.amazon.awscdk.services.rds.*;
 import software.constructs.Construct;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class OrderServiceStack extends Stack {
@@ -62,16 +63,17 @@ public class OrderServiceStack extends Stack {
                 .vpc(vpc)
                 .build());
 
-        Map<String, String> containerEnv = Map.of("SPRING_DATASOURCE_URL",dbConnectUri,
-                "SPRING_DATASOURCE_USERNAME", orderPostgresUsername,
-                "SPRING_DATASOURCE_PASSWORD", orderPostgresPass,
-                "SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri,
-                "SPRING_DATASOURCE_FLYWAY_USER", orderPostgresUsername,
-                "SPRING_DATASOURCE_FLYWAY_PASSWORD", orderPostgresPass,
-                "CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount(),
-                "CLOUD_AWS_CREDENTIALS_SECRET-KEY", secret,
-                "CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion(),
-                "CLOUD_AWS_END-POINTS_URL-RECEIVE", orderQueueUrl);
+        Map<String, String> containerEnv = new HashMap<>();
+        containerEnv.put("SPRING_DATASOURCE_URL",dbConnectUri);
+        containerEnv.put("SPRING_DATASOURCE_USERNAME", orderPostgresUsername);
+        containerEnv.put("SPRING_DATASOURCE_PASSWORD", orderPostgresPass);
+        containerEnv.put("SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri);
+        containerEnv.put("SPRING_DATASOURCE_FLYWAY_USER", orderPostgresUsername);
+        containerEnv.put("SPRING_DATASOURCE_FLYWAY_PASSWORD", orderPostgresPass);
+        containerEnv.put("CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount());
+        containerEnv.put("CLOUD_AWS_CREDENTIALS_SECRET-KEY", secret);
+        containerEnv.put("CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion());
+        containerEnv.put("CLOUD_AWS_END-POINTS_URL-RECEIVE", orderQueueUrl);
         containerEnv.put("CLOUD_AWS_END-POINTS_URL-SEND-CUSTOMER", customerQueueUrl);
         containerEnv.put("CLOUD_AWS_END-POINTS_URL-SEND-ODD", oddsQueueUrl);
         containerEnv.put("CLOUD_AWS_END-POINTS_URL-SEND-PAYMENT", paymentQueueUrl);
@@ -117,10 +119,13 @@ public class OrderServiceStack extends Stack {
                 .scaleOutCooldown(Duration.seconds(30))
                 .build());
 
+        Map<String, Object> cfnProps = new HashMap<>();
+        cfnProps.put("Name", "V2 vpc link order-service");
+        cfnProps.put("SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId));
+
         CfnResource httpVpcLink = new software.amazon.awscdk.CfnResource(this, "HttpVpcLinkOrder", CfnResourceProps.builder()
                 .type("AWS::ApiGatewayV2::VpcLink")
-                .properties(Map.of("Name", "V2 vpc link order-service",
-                        "SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId)))
+                .properties(cfnProps)
                 .build());
         cfnResource = httpVpcLink;
     }

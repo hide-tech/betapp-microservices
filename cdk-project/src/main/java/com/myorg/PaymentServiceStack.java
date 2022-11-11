@@ -15,6 +15,7 @@ import software.amazon.awscdk.services.sqs.Queue;
 import software.amazon.awscdk.services.sqs.QueueProps;
 import software.constructs.Construct;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class PaymentServiceStack extends Stack {
@@ -61,13 +62,13 @@ public class PaymentServiceStack extends Stack {
                 .billingMode(BillingMode.PROVISIONED)
                 .build());
 
-        Map<String, String> containerEnv = Map.of(
-                "CLOUD_AWS_ACCESS-KEY", props.getEnv().getAccount(),
-                "CLOUD_AWS_SECRET-KEY", secret,
-                "CLOUD_AWS_REGION", props.getEnv().getRegion(),
-                "CLOUD_AWS_DYNAMO_ENDPOINT", dynamoTable.getTableName(),
-                "CLOUD_AWS_QUEUE_RECEIVE-ENDPOINT", paymentQueueUrl,
-                "CLOUD_AWS_QUEUE_SEND-ENDPOINT", orderQueueUrl);
+        Map<String, String> containerEnv = new HashMap<>();
+        containerEnv.put("CLOUD_AWS_ACCESS-KEY", props.getEnv().getAccount());
+        containerEnv.put("CLOUD_AWS_SECRET-KEY", secret);
+        containerEnv.put("CLOUD_AWS_REGION", props.getEnv().getRegion());
+        containerEnv.put("CLOUD_AWS_DYNAMO_ENDPOINT", dynamoTable.getTableName());
+        containerEnv.put("CLOUD_AWS_QUEUE_RECEIVE-ENDPOINT", paymentQueueUrl);
+        containerEnv.put("CLOUD_AWS_QUEUE_SEND-ENDPOINT", orderQueueUrl);
 
         ApplicationLoadBalancedFargateService serviceApp = new ApplicationLoadBalancedFargateService(
                 this, "payment-service-load-balancer", ApplicationLoadBalancedFargateServiceProps.builder()
@@ -111,10 +112,13 @@ public class PaymentServiceStack extends Stack {
                 .scaleOutCooldown(Duration.seconds(30))
                 .build());
 
+        Map<String, Object> cfnProps = new HashMap<>();
+        cfnProps.put("Name", "V2 vpc link payment-service");
+        cfnProps.put("SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId));
+
         CfnResource httpVpcLink = new CfnResource(this, "HttpVpcLinkPayment", CfnResourceProps.builder()
                 .type("AWS::ApiGatewayV2::VpcLink")
-                .properties(Map.of("Name", "V2 vpc link payment-service",
-                        "SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId)))
+                .properties(cfnProps)
                 .build());
         cfnResource = httpVpcLink;
     }

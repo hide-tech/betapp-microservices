@@ -7,8 +7,6 @@ import software.amazon.awscdk.services.apigatewayv2.CfnRoute;
 import software.amazon.awscdk.services.apigatewayv2.CfnRouteProps;
 import software.amazon.awscdk.services.apigatewayv2.alpha.HttpApi;
 import software.amazon.awscdk.services.apigatewayv2.alpha.HttpApiProps;
-import software.amazon.awscdk.services.sqs.Queue;
-import software.amazon.awscdk.services.sqs.QueueProps;
 
 public class CdkProjectApp {
     public static void main(final String[] args) {
@@ -23,16 +21,10 @@ public class CdkProjectApp {
                 .region(region)
                 .build();
 
-        Queue orderQueue = new Queue(app, "orderQueue", QueueProps.builder()
-                .queueName("OrderQueue")
-                .contentBasedDeduplication(true)
-                .fifo(true)
-                .build());
-        String orderQueueUrl = orderQueue.getQueueUrl();
-
         ScheduleServiceStack scheduleServiceStack = new ScheduleServiceStack(app, "bet-app-schedule-service", StackProps.builder()
                 .env(environment)
                 .build(), secret);
+        String orderQueueUrl = scheduleServiceStack.orderQueueUrl;
 
         OddsServiceStack oddsServiceStack = new OddsServiceStack(app, "bet-app-odds-service",
                 StackProps.builder()

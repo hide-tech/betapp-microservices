@@ -13,6 +13,7 @@ import software.amazon.awscdk.services.sqs.Queue;
 import software.amazon.awscdk.services.sqs.QueueProps;
 import software.constructs.Construct;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class CustomerServiceStack extends Stack {
@@ -68,16 +69,17 @@ public class CustomerServiceStack extends Stack {
                 .vpc(vpc)
                 .build());
 
-        Map<String, String> containerEnv = Map.of("SPRING_DATASOURCE_URL",dbConnectUri,
-                "SPRING_DATASOURCE_USERNAME", customerPostgresUsername,
-                "SPRING_DATASOURCE_PASSWORD", customerPostgresPass,
-                "SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri,
-                "SPRING_DATASOURCE_FLYWAY_USER", customerPostgresUsername,
-                "SPRING_DATASOURCE_FLYWAY_PASSWORD", customerPostgresPass,
-                "CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount(),
-                "CLOUD_AWS_CREDENTIALS_SECRET-KEY", secretKey,
-                "CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion(),
-                "CLOUD_AWS_END-POINT_URL-RECEIVE", customerQueueUrl);
+        Map<String, String> containerEnv = new HashMap<String, String>();
+        containerEnv.put("SPRING_DATASOURCE_URL",dbConnectUri);
+        containerEnv.put("SPRING_DATASOURCE_USERNAME", customerPostgresUsername);
+        containerEnv.put("SPRING_DATASOURCE_PASSWORD", customerPostgresPass);
+        containerEnv.put("SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri);
+        containerEnv.put("SPRING_DATASOURCE_FLYWAY_USER", customerPostgresUsername);
+        containerEnv.put("SPRING_DATASOURCE_FLYWAY_PASSWORD", customerPostgresPass);
+        containerEnv.put("CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount());
+        containerEnv.put("CLOUD_AWS_CREDENTIALS_SECRET-KEY", secretKey);
+        containerEnv.put("CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion());
+        containerEnv.put("CLOUD_AWS_END-POINT_URL-RECEIVE", customerQueueUrl);
         containerEnv.put("CLOUD_AWS_END-POINT_URL-SEND", orderQueueUrl);
 
         ApplicationLoadBalancedFargateService serviceApp = new ApplicationLoadBalancedFargateService(
@@ -121,10 +123,13 @@ public class CustomerServiceStack extends Stack {
                         .scaleOutCooldown(Duration.seconds(30))
                 .build());
 
+        Map<String, Object> cfnProps = new HashMap<>();
+        cfnProps.put("Name", "V2 vpc link customer-service");
+        cfnProps.put("SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId));
+
         CfnResource httpVpcLink = new CfnResource(this, "HttpVpcLinkCustomer", CfnResourceProps.builder()
                 .type("AWS::ApiGatewayV2::VpcLink")
-                .properties(Map.of("Name", "V2 vpc link customer-service",
-                        "SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId)))
+                .properties(cfnProps)
                 .build());
         cfnResource = httpVpcLink;
     }

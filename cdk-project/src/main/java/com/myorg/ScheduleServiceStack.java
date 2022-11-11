@@ -9,8 +9,11 @@ import software.amazon.awscdk.services.ecs.patterns.ApplicationLoadBalancedFarga
 import software.amazon.awscdk.services.ecs.patterns.ApplicationLoadBalancedTaskImageOptions;
 import software.amazon.awscdk.services.elasticloadbalancingv2.HealthCheck;
 import software.amazon.awscdk.services.rds.*;
+import software.amazon.awscdk.services.sqs.Queue;
+import software.amazon.awscdk.services.sqs.QueueProps;
 import software.constructs.Construct;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class ScheduleServiceStack extends Stack {
@@ -18,6 +21,7 @@ public class ScheduleServiceStack extends Stack {
     private final String schedulePostgresUsername = "postgresUser";
     private final String schedulePostgresPass = "postgresPass";
     private final String scheduleDatabaseName = "schedules";
+    public String orderQueueUrl;
     public CfnResource cfnResource;
     public ApplicationLoadBalancedFargateService loadBalancer;
 
@@ -56,12 +60,13 @@ public class ScheduleServiceStack extends Stack {
                 .vpc(vpc)
                 .build());
 
-        Map<String, String> containerEnv = Map.of("SPRING_DATASOURCE_URL",dbConnectUri,
-                "SPRING_DATASOURCE_USERNAME", schedulePostgresUsername,
-                "SPRING_DATASOURCE_PASSWORD", schedulePostgresPass,
-                "SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri,
-                "SPRING_DATASOURCE_FLYWAY_USER", schedulePostgresUsername,
-                "SPRING_DATASOURCE_FLYWAY_PASSWORD", schedulePostgresPass);
+        Map<String, String> containerEnv = new HashMap<>();
+        containerEnv.put("SPRING_DATASOURCE_URL",dbConnectUri);
+        containerEnv.put("SPRING_DATASOURCE_USERNAME", schedulePostgresUsername);
+        containerEnv.put("SPRING_DATASOURCE_PASSWORD", schedulePostgresPass);
+        containerEnv.put("SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri);
+        containerEnv.put("SPRING_DATASOURCE_FLYWAY_USER", schedulePostgresUsername);
+        containerEnv.put("SPRING_DATASOURCE_FLYWAY_PASSWORD", schedulePostgresPass);
 
         ApplicationLoadBalancedFargateService serviceApp = new ApplicationLoadBalancedFargateService(
                 this, "schedule-service-load-balancer", ApplicationLoadBalancedFargateServiceProps.builder()
@@ -103,11 +108,21 @@ public class ScheduleServiceStack extends Stack {
                 .scaleOutCooldown(Duration.seconds(30))
                 .build());
 
+        Map<String, Object> cfnProps = new HashMap<>();
+        cfnProps.put("Name", "V2 vpc link schedule-service");
+        cfnProps.put("SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId));
+
         CfnResource httpVpcLink = new CfnResource(this, "HttpVpcLinkSchedule", CfnResourceProps.builder()
                 .type("AWS::ApiGatewayV2::VpcLink")
-                .properties(Map.of("Name", "V2 vpc link schedule-service",
-                        "SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId)))
+                .properties(cfnProps)
                 .build());
         cfnResource = httpVpcLink;
+
+        Queue orderQueue = new Queue(this, "orderQueue", QueueProps.builder()
+                .queueName("OrderQueue")
+                .contentBasedDeduplication(true)
+                .fifo(true)
+                .build());
+        orderQueueUrl = orderQueue.getQueueUrl();
     }
 }
