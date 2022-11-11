@@ -1,9 +1,7 @@
 package com.myorg;
 
-import software.amazon.awscdk.Duration;
-import software.amazon.awscdk.SecretValue;
-import software.amazon.awscdk.Stack;
-import software.amazon.awscdk.StackProps;
+import software.amazon.awscdk.*;
+import software.amazon.awscdk.CfnResource;
 import software.amazon.awscdk.services.applicationautoscaling.EnableScalingProps;
 import software.amazon.awscdk.services.ec2.*;
 import software.amazon.awscdk.services.ecs.*;
@@ -21,6 +19,8 @@ public class OrderServiceStack extends Stack {
     private final String orderPostgresUsername = "postgresUser";
     private final String orderPostgresPass = "postgresPass";
     private final String orderDatabaseName = "orders";
+    public CfnResource cfnResource;
+    public ApplicationLoadBalancedFargateService loadBalancer;
 
     public OrderServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null, null, null, null, null, null);
@@ -93,6 +93,8 @@ public class OrderServiceStack extends Stack {
                 .build()
         );
 
+        loadBalancer = serviceApp;
+
         serviceApp.getTargetGroup().configureHealthCheck(HealthCheck.builder()
                 .port("traffic-port")
                 .path("/actuator/health")
@@ -114,5 +116,12 @@ public class OrderServiceStack extends Stack {
                 .scaleInCooldown(Duration.seconds(30))
                 .scaleOutCooldown(Duration.seconds(30))
                 .build());
+
+        CfnResource httpVpcLink = new software.amazon.awscdk.CfnResource(this, "HttpVpcLinkOrder", CfnResourceProps.builder()
+                .type("AWS::ApiGatewayV2::VpcLink")
+                .properties(Map.of("Name", "V2 vpc link order-service",
+                        "SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId)))
+                .build());
+        cfnResource = httpVpcLink;
     }
 }

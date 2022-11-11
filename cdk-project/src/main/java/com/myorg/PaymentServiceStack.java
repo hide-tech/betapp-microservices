@@ -1,10 +1,9 @@
 package com.myorg;
 
-import software.amazon.awscdk.Duration;
-import software.amazon.awscdk.Stack;
-import software.amazon.awscdk.StackProps;
+import software.amazon.awscdk.*;
 import software.amazon.awscdk.services.applicationautoscaling.EnableScalingProps;
 import software.amazon.awscdk.services.dynamodb.*;
+import software.amazon.awscdk.services.ec2.ISubnet;
 import software.amazon.awscdk.services.ec2.Vpc;
 import software.amazon.awscdk.services.ec2.VpcProps;
 import software.amazon.awscdk.services.ecs.*;
@@ -21,6 +20,8 @@ import java.util.Map;
 public class PaymentServiceStack extends Stack {
 
     public String paymentQueueUrl;
+    public CfnResource cfnResource;
+    public ApplicationLoadBalancedFargateService loadBalancer;
 
     public PaymentServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null, null);
@@ -84,6 +85,8 @@ public class PaymentServiceStack extends Stack {
                 .build()
         );
 
+        loadBalancer = serviceApp;
+
         dynamoTable.grantReadWriteData(serviceApp.getTaskDefinition().getTaskRole());
 
         serviceApp.getTargetGroup().configureHealthCheck(HealthCheck.builder()
@@ -107,5 +110,12 @@ public class PaymentServiceStack extends Stack {
                 .scaleInCooldown(Duration.seconds(30))
                 .scaleOutCooldown(Duration.seconds(30))
                 .build());
+
+        CfnResource httpVpcLink = new CfnResource(this, "HttpVpcLinkPayment", CfnResourceProps.builder()
+                .type("AWS::ApiGatewayV2::VpcLink")
+                .properties(Map.of("Name", "V2 vpc link payment-service",
+                        "SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId)))
+                .build());
+        cfnResource = httpVpcLink;
     }
 }

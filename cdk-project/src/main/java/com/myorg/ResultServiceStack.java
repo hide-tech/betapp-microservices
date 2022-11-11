@@ -1,9 +1,6 @@
 package com.myorg;
 
-import software.amazon.awscdk.Duration;
-import software.amazon.awscdk.SecretValue;
-import software.amazon.awscdk.Stack;
-import software.amazon.awscdk.StackProps;
+import software.amazon.awscdk.*;
 import software.amazon.awscdk.services.applicationautoscaling.EnableScalingProps;
 import software.amazon.awscdk.services.ec2.*;
 import software.amazon.awscdk.services.ecs.*;
@@ -24,6 +21,8 @@ public class ResultServiceStack extends Stack {
     private final String resultPostgresPass = "postgresPass";
     private final String resultDatabaseName = "results";
     public String resultQueueUrl;
+    public CfnResource cfnResource;
+    public ApplicationLoadBalancedFargateService loadBalancer;
 
     public ResultServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null, null);
@@ -97,6 +96,8 @@ public class ResultServiceStack extends Stack {
                 .build()
         );
 
+        loadBalancer = serviceApp;
+
         serviceApp.getTargetGroup().configureHealthCheck(HealthCheck.builder()
                 .port("traffic-port")
                 .path("/actuator/health")
@@ -118,5 +119,12 @@ public class ResultServiceStack extends Stack {
                 .scaleInCooldown(Duration.seconds(30))
                 .scaleOutCooldown(Duration.seconds(30))
                 .build());
+
+        CfnResource httpVpcLink = new CfnResource(this, "HttpVpcLinkResult", CfnResourceProps.builder()
+                .type("AWS::ApiGatewayV2::VpcLink")
+                .properties(Map.of("Name", "V2 vpc link result-service",
+                        "SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId)))
+                .build());
+        cfnResource = httpVpcLink;
     }
 }

@@ -1,9 +1,6 @@
 package com.myorg;
 
-import software.amazon.awscdk.Duration;
-import software.amazon.awscdk.SecretValue;
-import software.amazon.awscdk.Stack;
-import software.amazon.awscdk.StackProps;
+import software.amazon.awscdk.*;
 import software.amazon.awscdk.services.applicationautoscaling.EnableScalingProps;
 import software.amazon.awscdk.services.ec2.*;
 import software.amazon.awscdk.services.ecs.*;
@@ -24,6 +21,8 @@ public class CustomerServiceStack extends Stack {
     private final String customerPostgresPass = "postgresPass";
     private final String customerDatabaseName = "customers";
     public String customerQueueUrl;
+    public CfnResource cfnResource;
+    public ApplicationLoadBalancedFargateService loadBalancer;
 
     public CustomerServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null, null);
@@ -83,6 +82,7 @@ public class CustomerServiceStack extends Stack {
 
         ApplicationLoadBalancedFargateService serviceApp = new ApplicationLoadBalancedFargateService(
                this, "customer-service-load-balancer", ApplicationLoadBalancedFargateServiceProps.builder()
+                .assignPublicIp(false)
                 .cluster(cluster)
                 .desiredCount(2)
                 .cpu(256)
@@ -96,6 +96,8 @@ public class CustomerServiceStack extends Stack {
                         .build())
                 .build()
         );
+
+        loadBalancer = serviceApp;
 
         serviceApp.getTargetGroup().configureHealthCheck(HealthCheck.builder()
                         .port("traffic-port")
@@ -118,5 +120,12 @@ public class CustomerServiceStack extends Stack {
                         .scaleInCooldown(Duration.seconds(30))
                         .scaleOutCooldown(Duration.seconds(30))
                 .build());
+
+        CfnResource httpVpcLink = new CfnResource(this, "HttpVpcLinkCustomer", CfnResourceProps.builder()
+                .type("AWS::ApiGatewayV2::VpcLink")
+                .properties(Map.of("Name", "V2 vpc link customer-service",
+                        "SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId)))
+                .build());
+        cfnResource = httpVpcLink;
     }
 }

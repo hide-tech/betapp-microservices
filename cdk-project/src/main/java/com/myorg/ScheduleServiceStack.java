@@ -1,9 +1,6 @@
 package com.myorg;
 
-import software.amazon.awscdk.Duration;
-import software.amazon.awscdk.SecretValue;
-import software.amazon.awscdk.Stack;
-import software.amazon.awscdk.StackProps;
+import software.amazon.awscdk.*;
 import software.amazon.awscdk.services.applicationautoscaling.EnableScalingProps;
 import software.amazon.awscdk.services.ec2.*;
 import software.amazon.awscdk.services.ecs.*;
@@ -21,6 +18,8 @@ public class ScheduleServiceStack extends Stack {
     private final String schedulePostgresUsername = "postgresUser";
     private final String schedulePostgresPass = "postgresPass";
     private final String scheduleDatabaseName = "schedules";
+    public CfnResource cfnResource;
+    public ApplicationLoadBalancedFargateService loadBalancer;
 
     public ScheduleServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null);
@@ -80,6 +79,8 @@ public class ScheduleServiceStack extends Stack {
                 .build()
         );
 
+        loadBalancer = serviceApp;
+
         serviceApp.getTargetGroup().configureHealthCheck(HealthCheck.builder()
                 .port("traffic-port")
                 .path("/actuator/health")
@@ -101,5 +102,12 @@ public class ScheduleServiceStack extends Stack {
                 .scaleInCooldown(Duration.seconds(30))
                 .scaleOutCooldown(Duration.seconds(30))
                 .build());
+
+        CfnResource httpVpcLink = new CfnResource(this, "HttpVpcLinkSchedule", CfnResourceProps.builder()
+                .type("AWS::ApiGatewayV2::VpcLink")
+                .properties(Map.of("Name", "V2 vpc link schedule-service",
+                        "SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId)))
+                .build());
+        cfnResource = httpVpcLink;
     }
 }
