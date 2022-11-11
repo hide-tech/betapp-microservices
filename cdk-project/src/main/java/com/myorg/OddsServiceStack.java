@@ -58,7 +58,7 @@ public class OddsServiceStack extends Stack {
                         .vpc(vpc)
                         .allocatedStorage(200)
                         .databaseName(oddsDatabaseName)
-                        .credentials(Credentials.fromPassword(oddsPostgresUsername, SecretValue.plainText(oddsPostgresPass)))
+                        .credentials(Credentials.fromPassword(oddsPostgresUsername, SecretValue.unsafePlainText(oddsPostgresPass)))
                         .build());
 
         String dbInstanceSocketAddress = oddsDB.getInstanceEndpoint().getSocketAddress();

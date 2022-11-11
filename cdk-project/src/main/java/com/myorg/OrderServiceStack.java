@@ -52,7 +52,7 @@ public class OrderServiceStack extends Stack {
                         .vpc(vpc)
                         .allocatedStorage(200)
                         .databaseName(orderDatabaseName)
-                        .credentials(Credentials.fromPassword(orderPostgresUsername, SecretValue.plainText(orderPostgresPass)))
+                        .credentials(Credentials.fromPassword(orderPostgresUsername, SecretValue.unsafePlainText(orderPostgresPass)))
                         .build());
 
         String dbInstanceSocketAddress = orderDb.getInstanceEndpoint().getSocketAddress();

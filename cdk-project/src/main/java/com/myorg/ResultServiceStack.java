@@ -58,7 +58,7 @@ public class ResultServiceStack extends Stack {
                         .vpc(vpc)
                         .allocatedStorage(200)
                         .databaseName(resultDatabaseName)
-                        .credentials(Credentials.fromPassword(resultPostgresUsername, SecretValue.plainText(resultPostgresPass)))
+                        .credentials(Credentials.fromPassword(resultPostgresUsername, SecretValue.unsafePlainText(resultPostgresPass)))
                         .build());
 
         String dbInstanceSocketAddress = resultDb.getInstanceEndpoint().getSocketAddress();

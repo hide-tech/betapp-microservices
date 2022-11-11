@@ -58,7 +58,7 @@ public class CustomerServiceStack extends Stack {
                         .vpc(vpc)
                         .allocatedStorage(200)
                         .databaseName(customerDatabaseName)
-                        .credentials(Credentials.fromPassword(customerPostgresUsername, SecretValue.plainText(customerPostgresPass)))
+                        .credentials(Credentials.fromPassword(customerPostgresUsername, SecretValue.unsafePlainText(customerPostgresPass)))
                         .build());
 
         String dbInstanceSocketAddress = customerDb.getInstanceEndpoint().getSocketAddress();

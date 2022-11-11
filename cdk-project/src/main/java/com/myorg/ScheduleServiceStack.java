@@ -49,7 +49,7 @@ public class ScheduleServiceStack extends Stack {
                         .vpc(vpc)
                         .allocatedStorage(200)
                         .databaseName(scheduleDatabaseName)
-                        .credentials(Credentials.fromPassword(schedulePostgresUsername, SecretValue.plainText(schedulePostgresPass)))
+                        .credentials(Credentials.fromPassword(schedulePostgresUsername, SecretValue.unsafePlainText(schedulePostgresPass)))
                         .build());
 
         String dbInstanceSocketAddress = scheduleDB.getInstanceEndpoint().getSocketAddress();

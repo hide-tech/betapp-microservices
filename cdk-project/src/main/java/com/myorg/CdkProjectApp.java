@@ -12,9 +12,13 @@ public class CdkProjectApp {
     public static void main(final String[] args) {
         App app = new App();
 
-        String accessId = (String) app.getNode().tryGetContext("accessId");
-        String secret = (String) app.getNode().tryGetContext("secret");
-        String region = (String) app.getNode().tryGetContext("region");
+//        String accessId = (String) app.getNode().tryGetContext("accessId");
+//        String secret = (String) app.getNode().tryGetContext("secret");
+//        String region = (String) app.getNode().tryGetContext("region");
+
+        String accessId = "iyutwefwdf";
+        String secret = "DJFSDKJVNSKslkdvosdflskknvs";
+        String region = "us-east-1";
 
         Environment environment = Environment.builder()
                 .account(accessId)
