@@ -77,7 +77,7 @@ public class ScheduleServiceStack extends Stack {
                 .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
                         .image(ContainerImage.fromAsset("../back/schedule-service/schedule-service",
                                 AssetImageProps.builder()
-                                        .buildArgs(containerEnv)
+//                                        .buildArgs(containerEnv)
                                         .build()))
                         .containerPort(8080)
                         .build())
@@ -119,7 +119,7 @@ public class ScheduleServiceStack extends Stack {
         cfnResource = httpVpcLink;
 
         Queue orderQueue = new Queue(this, "orderQueue", QueueProps.builder()
-                .queueName("OrderQueue")
+                .queueName("OrderQueue.fifo")
                 .contentBasedDeduplication(true)
                 .fifo(true)
                 .build());

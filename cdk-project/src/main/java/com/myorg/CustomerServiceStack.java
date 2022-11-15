@@ -39,7 +39,7 @@ public class CustomerServiceStack extends Stack {
         Queue queue = new Queue(this, "CustomerQueue", QueueProps.builder()
                 .fifo(true)
                 .contentBasedDeduplication(true)
-                .queueName("CustomerQueue")
+                .queueName("CustomerQueue.fifo")
                 .build());
 
         this.customerQueueUrl = queue.getQueueUrl();
@@ -92,7 +92,7 @@ public class CustomerServiceStack extends Stack {
                 .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
                         .image(ContainerImage.fromAsset("../back/customer-service/customer-service",
                                 AssetImageProps.builder()
-                                        .buildArgs(containerEnv)
+//                                        .buildArgs(containerEnv)
                                         .build()))
                         .containerPort(8080)
                         .build())

@@ -38,7 +38,7 @@ public class PaymentServiceStack extends Stack {
         Queue queue = new Queue(this, "PaymentQueue", QueueProps.builder()
                 .fifo(true)
                 .contentBasedDeduplication(true)
-                .queueName("PaymentQueue")
+                .queueName("PaymentQueue.fifo")
                 .build());
 
         paymentQueueUrl = queue.getQueueUrl();
@@ -79,7 +79,7 @@ public class PaymentServiceStack extends Stack {
                 .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
                         .image(ContainerImage.fromAsset("../back/payment-service/payment-service",
                                 AssetImageProps.builder()
-                                        .buildArgs(containerEnv)
+//                                        .buildArgs(containerEnv)
                                         .build()))
                         .containerPort(8080)
                         .build())

@@ -39,7 +39,7 @@ public class ResultServiceStack extends Stack {
         Queue queue = new Queue(this, "ResultQueue", QueueProps.builder()
                 .fifo(true)
                 .contentBasedDeduplication(true)
-                .queueName("ResultQueue")
+                .queueName("ResultQueue.fifo")
                 .build());
 
         resultQueueUrl = queue.getQueueUrl();
@@ -91,7 +91,7 @@ public class ResultServiceStack extends Stack {
                 .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
                         .image(ContainerImage.fromAsset("../back/result-service/result-service",
                                 AssetImageProps.builder()
-                                        .buildArgs(containerEnv)
+//                                        .buildArgs(containerEnv)
                                         .build()))
                         .containerPort(8080)
                         .build())

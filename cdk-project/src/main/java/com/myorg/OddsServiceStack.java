@@ -39,7 +39,7 @@ public class OddsServiceStack extends Stack {
         Queue queue = new Queue(this, "OddsQueue", QueueProps.builder()
                 .fifo(true)
                 .contentBasedDeduplication(true)
-                .queueName("OddsQueue")
+                .queueName("OddsQueue.fifo")
                 .build());
 
         this.oddsQueueUrl = queue.getQueueUrl();
@@ -91,7 +91,7 @@ public class OddsServiceStack extends Stack {
                 .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
                         .image(ContainerImage.fromAsset("../back/odds-service/odds-service",
                                 AssetImageProps.builder()
-                                        .buildArgs(containerEnv)
+//                                        .buildArgs(containerEnv)
                                         .build()))
                         .containerPort(8080)
                         .build())
