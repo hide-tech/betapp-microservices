@@ -17,7 +17,8 @@ public class CdkProjectApp {
                 .region(region)
                 .build();
 
-        ScheduleServiceStack scheduleServiceStack = new ScheduleServiceStack(app, "bet-app-schedule-service", StackProps.builder()
+        ScheduleServiceStack scheduleServiceStack = new ScheduleServiceStack(app, "bet-app-schedule-service",
+                StackProps.builder()
                 .env(environment)
                 .build(), secret);
         String orderQueueUrl = scheduleServiceStack.orderQueueUrl;
@@ -52,9 +53,8 @@ public class CdkProjectApp {
                 .build(),
                 orderQueueUrl, oddsQueueUrl, customerQueueUrl, paymentQueueUrl, resultQueueUrl, secret);
 
-        new ParameterStoreStack(app, "bet-app-param-store", StackProps.builder()
-                .env(environment)
-                .build(),
+        new ParameterStoreStack(app, "bet-app-param-store",
+                StackProps.builder().env(environment).build(),
                 scheduleServiceStack,
                 oddsServiceStack,
                 customerServiceStack,
