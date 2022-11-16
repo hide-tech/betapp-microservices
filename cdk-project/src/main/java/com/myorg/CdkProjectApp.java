@@ -8,13 +8,9 @@ public class CdkProjectApp {
     public static void main(final String[] args) {
         App app = new App();
 
-//        String accessId = (String) app.getNode().tryGetContext("accessId");
-//        String secret = (String) app.getNode().tryGetContext("secret");
-//        String region = (String) app.getNode().tryGetContext("region");
-
-        String accessId = "iyutwefwdf";
-        String secret = "DJFSDKJVNSKslkdvosdflskknvs";
-        String region = "us-east-1";
+        String accessId = (String) app.getNode().tryGetContext("accessId");
+        String secret = (String) app.getNode().tryGetContext("secret");
+        String region = (String) app.getNode().tryGetContext("region");
 
         Environment environment = Environment.builder()
                 .account(accessId)
@@ -55,6 +51,16 @@ public class CdkProjectApp {
                 .env(environment)
                 .build(),
                 orderQueueUrl, oddsQueueUrl, customerQueueUrl, paymentQueueUrl, resultQueueUrl, secret);
+
+        new ParameterStoreStack(app, "bet-app-param-store", StackProps.builder()
+                .env(environment)
+                .build(),
+                scheduleServiceStack,
+                oddsServiceStack,
+                customerServiceStack,
+                paymentServiceStack,
+                resultServiceStack,
+                orderServiceStack);
 
         new ApiGatewayStack(app,
                 "api-gateway-stack",

@@ -21,6 +21,7 @@ import java.util.Map;
 public class PaymentServiceStack extends Stack {
 
     public String paymentQueueUrl;
+    public String dynamoTableEndpoint;
     public CfnResource cfnResource;
     public ApplicationLoadBalancedFargateService loadBalancer;
 
@@ -61,14 +62,12 @@ public class PaymentServiceStack extends Stack {
                         .build())
                 .billingMode(BillingMode.PROVISIONED)
                 .build());
+        dynamoTableEndpoint = dynamoTable.getTableName();
 
         Map<String, String> containerEnv = new HashMap<>();
         containerEnv.put("CLOUD_AWS_ACCESS-KEY", props.getEnv().getAccount());
         containerEnv.put("CLOUD_AWS_SECRET-KEY", secret);
         containerEnv.put("CLOUD_AWS_REGION", props.getEnv().getRegion());
-        containerEnv.put("CLOUD_AWS_DYNAMO_ENDPOINT", dynamoTable.getTableName());
-        containerEnv.put("CLOUD_AWS_QUEUE_RECEIVE-ENDPOINT", paymentQueueUrl);
-        containerEnv.put("CLOUD_AWS_QUEUE_SEND-ENDPOINT", orderQueueUrl);
 
         ApplicationLoadBalancedFargateService serviceApp = new ApplicationLoadBalancedFargateService(
                 this, "payment-service-load-balancer", ApplicationLoadBalancedFargateServiceProps.builder()
@@ -79,7 +78,7 @@ public class PaymentServiceStack extends Stack {
                 .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
                         .image(ContainerImage.fromAsset("../back/payment-service/payment-service",
                                 AssetImageProps.builder()
-//                                        .buildArgs(containerEnv)
+                                        .buildArgs(containerEnv)
                                         .build()))
                         .containerPort(8080)
                         .build())

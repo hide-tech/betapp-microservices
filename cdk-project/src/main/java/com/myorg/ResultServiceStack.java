@@ -18,12 +18,13 @@ import java.util.Map;
 
 public class ResultServiceStack extends Stack {
 
-    private final String resultPostgresUsername = "postgresUser";
-    private final String resultPostgresPass = "postgresPass";
-    private final String resultDatabaseName = "results";
+    public final String resultPostgresUsername = "postgresUser";
+    public final String resultPostgresPass = "postgresPass";
+    public final String resultDatabaseName = "results";
     public String resultQueueUrl;
     public CfnResource cfnResource;
     public ApplicationLoadBalancedFargateService loadBalancer;
+    public String resultServiceDbUrl;
 
     public ResultServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null, null);
@@ -63,6 +64,7 @@ public class ResultServiceStack extends Stack {
 
         String dbInstanceSocketAddress = resultDb.getInstanceEndpoint().getSocketAddress();
         String dbConnectUri = "jdbc:postgresql://" + dbInstanceSocketAddress + "/" + resultDatabaseName;
+        resultServiceDbUrl = dbConnectUri;
 
         Cluster cluster = new Cluster(this, "result-service-cluster", ClusterProps.builder()
                 .clusterName("resultServiceCluster")
@@ -70,17 +72,9 @@ public class ResultServiceStack extends Stack {
                 .build());
 
         Map<String, String> containerEnv = new HashMap<>();
-        containerEnv.put("SPRING_DATASOURCE_URL",dbConnectUri);
-        containerEnv.put("SPRING_DATASOURCE_USERNAME", resultPostgresUsername);
-        containerEnv.put("SPRING_DATASOURCE_PASSWORD", resultPostgresPass);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_USER", resultPostgresUsername);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_PASSWORD", resultPostgresPass);
         containerEnv.put("CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount());
         containerEnv.put("CLOUD_AWS_CREDENTIALS_SECRET-KEY", secret);
         containerEnv.put("CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion());
-        containerEnv.put("CLOUD_AWS_END-POINT_URL-RECEIVE", resultQueueUrl);
-        containerEnv.put("CLOUD_AWS_END-POINT_URL-SEND", orderQueueUrl);
 
         ApplicationLoadBalancedFargateService serviceApp = new ApplicationLoadBalancedFargateService(
                 this, "result-service-load-balancer", ApplicationLoadBalancedFargateServiceProps.builder()
@@ -91,7 +85,7 @@ public class ResultServiceStack extends Stack {
                 .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
                         .image(ContainerImage.fromAsset("../back/result-service/result-service",
                                 AssetImageProps.builder()
-//                                        .buildArgs(containerEnv)
+                                        .buildArgs(containerEnv)
                                         .build()))
                         .containerPort(8080)
                         .build())

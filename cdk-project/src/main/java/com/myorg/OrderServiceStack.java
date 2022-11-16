@@ -17,11 +17,12 @@ import java.util.Map;
 
 public class OrderServiceStack extends Stack {
 
-    private final String orderPostgresUsername = "postgresUser";
-    private final String orderPostgresPass = "postgresPass";
-    private final String orderDatabaseName = "orders";
+    public final String orderPostgresUsername = "postgresUser";
+    public final String orderPostgresPass = "postgresPass";
+    public final String orderDatabaseName = "orders";
     public CfnResource cfnResource;
     public ApplicationLoadBalancedFargateService loadBalancer;
+    public String orderServiceDbUrl;
 
     public OrderServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null, null, null, null, null, null);
@@ -57,6 +58,7 @@ public class OrderServiceStack extends Stack {
 
         String dbInstanceSocketAddress = orderDb.getInstanceEndpoint().getSocketAddress();
         String dbConnectUri = "jdbc:postgresql://" + dbInstanceSocketAddress + "/" + orderDatabaseName;
+        orderServiceDbUrl = dbConnectUri;
 
         Cluster cluster = new Cluster(this, "order-service-cluster", ClusterProps.builder()
                 .clusterName("orderServiceCluster")
@@ -64,20 +66,9 @@ public class OrderServiceStack extends Stack {
                 .build());
 
         Map<String, String> containerEnv = new HashMap<>();
-        containerEnv.put("SPRING_DATASOURCE_URL",dbConnectUri);
-        containerEnv.put("SPRING_DATASOURCE_USERNAME", orderPostgresUsername);
-        containerEnv.put("SPRING_DATASOURCE_PASSWORD", orderPostgresPass);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_USER", orderPostgresUsername);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_PASSWORD", orderPostgresPass);
         containerEnv.put("CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount());
         containerEnv.put("CLOUD_AWS_CREDENTIALS_SECRET-KEY", secret);
         containerEnv.put("CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion());
-        containerEnv.put("CLOUD_AWS_END-POINTS_URL-RECEIVE", orderQueueUrl);
-        containerEnv.put("CLOUD_AWS_END-POINTS_URL-SEND-CUSTOMER", customerQueueUrl);
-        containerEnv.put("CLOUD_AWS_END-POINTS_URL-SEND-ODD", oddsQueueUrl);
-        containerEnv.put("CLOUD_AWS_END-POINTS_URL-SEND-PAYMENT", paymentQueueUrl);
-        containerEnv.put("CLOUD_AWS_END-POINTS_URL-SEND-RESULT", resultQueueUrl);
 
         ApplicationLoadBalancedFargateService serviceApp = new ApplicationLoadBalancedFargateService(
                 this, "order-service-load-balancer", ApplicationLoadBalancedFargateServiceProps.builder()
@@ -88,7 +79,7 @@ public class OrderServiceStack extends Stack {
                 .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
                         .image(ContainerImage.fromAsset("../back/order-service/order-service",
                                 AssetImageProps.builder()
-//                                        .buildArgs(containerEnv)
+                                        .buildArgs(containerEnv)
                                         .build()))
                         .containerPort(8080)
                         .build())

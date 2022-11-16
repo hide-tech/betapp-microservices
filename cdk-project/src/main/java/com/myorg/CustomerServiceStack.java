@@ -18,12 +18,13 @@ import java.util.Map;
 
 public class CustomerServiceStack extends Stack {
 
-    private final String customerPostgresUsername = "postgresUser";
-    private final String customerPostgresPass = "postgresPass";
-    private final String customerDatabaseName = "customers";
+    public final String customerPostgresUsername = "postgresUser";
+    public final String customerPostgresPass = "postgresPass";
+    public final String customerDatabaseName = "customers";
     public String customerQueueUrl;
     public CfnResource cfnResource;
     public ApplicationLoadBalancedFargateService loadBalancer;
+    public String customerServiceDbUrl;
 
     public CustomerServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null, null);
@@ -63,24 +64,17 @@ public class CustomerServiceStack extends Stack {
 
         String dbInstanceSocketAddress = customerDb.getInstanceEndpoint().getSocketAddress();
         String dbConnectUri = "jdbc:postgresql://" + dbInstanceSocketAddress + "/" + customerDatabaseName;
+        customerServiceDbUrl = dbConnectUri;
 
         Cluster cluster = new Cluster(this, "customer-service-cluster", ClusterProps.builder()
                 .clusterName("customerServiceCluster")
                 .vpc(vpc)
                 .build());
 
-        Map<String, String> containerEnv = new HashMap<String, String>();
-        containerEnv.put("SPRING_DATASOURCE_URL",dbConnectUri);
-        containerEnv.put("SPRING_DATASOURCE_USERNAME", customerPostgresUsername);
-        containerEnv.put("SPRING_DATASOURCE_PASSWORD", customerPostgresPass);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_USER", customerPostgresUsername);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_PASSWORD", customerPostgresPass);
+        Map<String, String> containerEnv = new HashMap<>();
         containerEnv.put("CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount());
         containerEnv.put("CLOUD_AWS_CREDENTIALS_SECRET-KEY", secretKey);
         containerEnv.put("CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion());
-        containerEnv.put("CLOUD_AWS_END-POINT_URL-RECEIVE", customerQueueUrl);
-        containerEnv.put("CLOUD_AWS_END-POINT_URL-SEND", orderQueueUrl);
 
         ApplicationLoadBalancedFargateService serviceApp = new ApplicationLoadBalancedFargateService(
                this, "customer-service-load-balancer", ApplicationLoadBalancedFargateServiceProps.builder()
@@ -92,7 +86,7 @@ public class CustomerServiceStack extends Stack {
                 .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
                         .image(ContainerImage.fromAsset("../back/customer-service/customer-service",
                                 AssetImageProps.builder()
-//                                        .buildArgs(containerEnv)
+                                        .buildArgs(containerEnv)
                                         .build()))
                         .containerPort(8080)
                         .build())

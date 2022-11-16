@@ -18,12 +18,13 @@ import java.util.Map;
 
 public class OddsServiceStack extends Stack {
 
-    private final String oddsPostgresUsername = "postgresUser";
-    private final String oddsPostgresPass = "postgresPass";
-    private final String oddsDatabaseName = "odds";
+    public final String oddsPostgresUsername = "postgresUser";
+    public final String oddsPostgresPass = "postgresPass";
+    public final String oddsDatabaseName = "odds";
     public String oddsQueueUrl;
     public CfnResource cfnResource;
     public ApplicationLoadBalancedFargateService loadBalancer;
+    public String oddsServiceDBUrl;
 
     public OddsServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null, null);
@@ -63,6 +64,7 @@ public class OddsServiceStack extends Stack {
 
         String dbInstanceSocketAddress = oddsDB.getInstanceEndpoint().getSocketAddress();
         String dbConnectUri = "jdbc:postgresql://" + dbInstanceSocketAddress + "/" + oddsDatabaseName;
+        oddsServiceDBUrl = dbConnectUri;
 
         Cluster cluster = new Cluster(this, "odds-service-cluster", ClusterProps.builder()
                 .clusterName("oddsServiceCluster")
@@ -70,17 +72,9 @@ public class OddsServiceStack extends Stack {
                 .build());
 
         Map<String, String> containerEnv = new HashMap<>();
-        containerEnv.put("SPRING_DATASOURCE_URL",dbConnectUri);
-        containerEnv.put("SPRING_DATASOURCE_USERNAME", oddsPostgresUsername);
-        containerEnv.put("SPRING_DATASOURCE_PASSWORD", oddsPostgresPass);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_USER", oddsPostgresUsername);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_PASSWORD", oddsPostgresPass);
         containerEnv.put("CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount());
         containerEnv.put("CLOUD_AWS_CREDENTIALS_SECRET-KEY", secret);
         containerEnv.put("CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion());
-        containerEnv.put("CLOUD_AWS_END-POINT_URL-RECEIVE", oddsQueueUrl);
-        containerEnv.put("CLOUD_AWS_END-POINT_URL-SEND", orderQueueUrl);
 
         ApplicationLoadBalancedFargateService serviceApp = new ApplicationLoadBalancedFargateService(
                 this, "odds-service-load-balancer", ApplicationLoadBalancedFargateServiceProps.builder()
@@ -91,7 +85,7 @@ public class OddsServiceStack extends Stack {
                 .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
                         .image(ContainerImage.fromAsset("../back/odds-service/odds-service",
                                 AssetImageProps.builder()
-//                                        .buildArgs(containerEnv)
+                                        .buildArgs(containerEnv)
                                         .build()))
                         .containerPort(8080)
                         .build())

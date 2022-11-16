@@ -18,12 +18,13 @@ import java.util.Map;
 
 public class ScheduleServiceStack extends Stack {
 
-    private final String schedulePostgresUsername = "postgresUser";
-    private final String schedulePostgresPass = "postgresPass";
-    private final String scheduleDatabaseName = "schedules";
+    public final String schedulePostgresUsername = "postgresUser";
+    public final String schedulePostgresPass = "postgresPass";
+    public final String scheduleDatabaseName = "schedules";
     public String orderQueueUrl;
     public CfnResource cfnResource;
     public ApplicationLoadBalancedFargateService loadBalancer;
+    public String scheduleServiceDbUrl;
 
     public ScheduleServiceStack(final Construct scope, final String id) {
         this(scope, id, null, null);
@@ -54,19 +55,12 @@ public class ScheduleServiceStack extends Stack {
 
         String dbInstanceSocketAddress = scheduleDB.getInstanceEndpoint().getSocketAddress();
         String dbConnectUri = "jdbc:postgresql://" + dbInstanceSocketAddress + "/" + scheduleDatabaseName;
+        scheduleServiceDbUrl = dbConnectUri;
 
         Cluster cluster = new Cluster(this, "schedule-service-cluster", ClusterProps.builder()
                 .clusterName("scheduleServiceCluster")
                 .vpc(vpc)
                 .build());
-
-        Map<String, String> containerEnv = new HashMap<>();
-        containerEnv.put("SPRING_DATASOURCE_URL",dbConnectUri);
-        containerEnv.put("SPRING_DATASOURCE_USERNAME", schedulePostgresUsername);
-        containerEnv.put("SPRING_DATASOURCE_PASSWORD", schedulePostgresPass);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_URL", dbConnectUri);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_USER", schedulePostgresUsername);
-        containerEnv.put("SPRING_DATASOURCE_FLYWAY_PASSWORD", schedulePostgresPass);
 
         ApplicationLoadBalancedFargateService serviceApp = new ApplicationLoadBalancedFargateService(
                 this, "schedule-service-load-balancer", ApplicationLoadBalancedFargateServiceProps.builder()
@@ -77,7 +71,6 @@ public class ScheduleServiceStack extends Stack {
                 .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
                         .image(ContainerImage.fromAsset("../back/schedule-service/schedule-service",
                                 AssetImageProps.builder()
-//                                        .buildArgs(containerEnv)
                                         .build()))
                         .containerPort(8080)
                         .build())
