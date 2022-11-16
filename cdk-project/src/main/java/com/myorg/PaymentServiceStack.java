@@ -26,14 +26,15 @@ public class PaymentServiceStack extends Stack {
     public ApplicationLoadBalancedFargateService loadBalancer;
 
     public PaymentServiceStack(final Construct scope, final String id) {
-        this(scope, id, null, null, null);
+        this(scope, id, null, null, null, null);
     }
 
     public PaymentServiceStack(final Construct scope,
                                final String id,
                                final StackProps props,
                                final String orderQueueUrl,
-                               final String secret) {
+                               final String secret,
+                               final String accessId) {
         super(scope, id, props);
 
         Queue queue = new Queue(this, "PaymentQueue", QueueProps.builder()
@@ -65,7 +66,7 @@ public class PaymentServiceStack extends Stack {
         dynamoTableEndpoint = dynamoTable.getTableName();
 
         Map<String, String> containerEnv = new HashMap<>();
-        containerEnv.put("CLOUD_AWS_ACCESS-KEY", props.getEnv().getAccount());
+        containerEnv.put("CLOUD_AWS_ACCESS-KEY", accessId);
         containerEnv.put("CLOUD_AWS_SECRET-KEY", secret);
         containerEnv.put("CLOUD_AWS_REGION", props.getEnv().getRegion());
 

@@ -25,7 +25,7 @@ public class OrderServiceStack extends Stack {
     public String orderServiceDbUrl;
 
     public OrderServiceStack(final Construct scope, final String id) {
-        this(scope, id, null, null, null, null, null, null, null);
+        this(scope, id, null, null, null, null, null, null, null, null);
     }
 
     public OrderServiceStack(final Construct scope,
@@ -36,7 +36,8 @@ public class OrderServiceStack extends Stack {
                              final String customerQueueUrl,
                              final String paymentQueueUrl,
                              final String resultQueueUrl,
-                             final String secret) {
+                             final String secret,
+                             final String accessId) {
         super(scope, id, props);
 
         Vpc vpc = new Vpc(this, "order-service-vpc", VpcProps.builder()
@@ -66,7 +67,7 @@ public class OrderServiceStack extends Stack {
                 .build());
 
         Map<String, String> containerEnv = new HashMap<>();
-        containerEnv.put("CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount());
+        containerEnv.put("CLOUD_AWS_CREDENTIALS_ACCESS-KEY", accessId);
         containerEnv.put("CLOUD_AWS_CREDENTIALS_SECRET-KEY", secret);
         containerEnv.put("CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion());
 

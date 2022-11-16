@@ -27,14 +27,15 @@ public class CustomerServiceStack extends Stack {
     public String customerServiceDbUrl;
 
     public CustomerServiceStack(final Construct scope, final String id) {
-        this(scope, id, null, null, null);
+        this(scope, id, null, null, null, null);
     }
 
     public CustomerServiceStack(final Construct scope,
                                 final String id,
                                 final StackProps props,
                                 final String orderQueueUrl,
-                                final String secretKey) {
+                                final String secretKey,
+                                final String accessId) {
         super(scope, id, props);
 
         Queue queue = new Queue(this, "CustomerQueue", QueueProps.builder()
@@ -72,7 +73,7 @@ public class CustomerServiceStack extends Stack {
                 .build());
 
         Map<String, String> containerEnv = new HashMap<>();
-        containerEnv.put("CLOUD_AWS_CREDENTIALS_ACCESS-KEY", props.getEnv().getAccount());
+        containerEnv.put("CLOUD_AWS_CREDENTIALS_ACCESS-KEY", accessId);
         containerEnv.put("CLOUD_AWS_CREDENTIALS_SECRET-KEY", secretKey);
         containerEnv.put("CLOUD_AWS_REGION_STATIC", props.getEnv().getRegion());
 

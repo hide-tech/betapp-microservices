@@ -11,9 +11,10 @@ public class CdkProjectApp {
         String accessId = (String) app.getNode().tryGetContext("accessId");
         String secret = (String) app.getNode().tryGetContext("secret");
         String region = (String) app.getNode().tryGetContext("region");
+        String account = (String) app.getNode().tryGetContext("account");
 
         Environment environment = Environment.builder()
-                .account(accessId)
+                .account(account)
                 .region(region)
                 .build();
 
@@ -26,32 +27,32 @@ public class CdkProjectApp {
         OddsServiceStack oddsServiceStack = new OddsServiceStack(app, "bet-app-odds-service",
                 StackProps.builder()
                 .env(environment)
-                .build(), orderQueueUrl, secret);
+                .build(), orderQueueUrl, secret, accessId);
         String oddsQueueUrl = oddsServiceStack.oddsQueueUrl;
 
         CustomerServiceStack customerServiceStack = new CustomerServiceStack(app, "bet-app-customer-service",
                 StackProps.builder()
                 .env(environment)
-                .build(), orderQueueUrl, secret);
+                .build(), orderQueueUrl, secret, accessId);
         String customerQueueUrl = customerServiceStack.customerQueueUrl;
 
         PaymentServiceStack paymentServiceStack = new PaymentServiceStack(app, "bet-app-payment-service",
                 StackProps.builder()
                 .env(environment)
-                .build(), orderQueueUrl, secret);
+                .build(), orderQueueUrl, secret, accessId);
         String paymentQueueUrl = paymentServiceStack.paymentQueueUrl;
 
         ResultServiceStack resultServiceStack = new ResultServiceStack(app, "bet-app-result-service",
                 StackProps.builder()
                 .env(environment)
-                .build(), orderQueueUrl, secret);
+                .build(), orderQueueUrl, secret, accessId);
         String resultQueueUrl = resultServiceStack.resultQueueUrl;
 
         OrderServiceStack orderServiceStack = new OrderServiceStack(app, "bet-app-order-service",
                 StackProps.builder()
                 .env(environment)
                 .build(),
-                orderQueueUrl, oddsQueueUrl, customerQueueUrl, paymentQueueUrl, resultQueueUrl, secret);
+                orderQueueUrl, oddsQueueUrl, customerQueueUrl, paymentQueueUrl, resultQueueUrl, secret, accessId);
 
         new ParameterStoreStack(app, "bet-app-param-store",
                 StackProps.builder().env(environment).build(),
