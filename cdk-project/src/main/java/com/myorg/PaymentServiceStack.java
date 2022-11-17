@@ -17,6 +17,7 @@ import software.constructs.Construct;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class PaymentServiceStack extends Stack {
 
@@ -46,7 +47,7 @@ public class PaymentServiceStack extends Stack {
         paymentQueueUrl = queue.getQueueUrl();
 
         Vpc vpc = new Vpc(this, "payment-service-vpc", VpcProps.builder()
-                .maxAzs(1)
+                .maxAzs(2)
                 .natGateways(1)
                 .build());
 
@@ -114,7 +115,7 @@ public class PaymentServiceStack extends Stack {
 
         Map<String, Object> cfnProps = new HashMap<>();
         cfnProps.put("Name", "V2 vpc link payment-service");
-        cfnProps.put("SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId));
+        cfnProps.put("SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId).collect(Collectors.toList()));
 
         CfnResource httpVpcLink = new CfnResource(this, "HttpVpcLinkPayment", CfnResourceProps.builder()
                 .type("AWS::ApiGatewayV2::VpcLink")

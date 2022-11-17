@@ -15,6 +15,7 @@ import software.constructs.Construct;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ResultServiceStack extends Stack {
 
@@ -47,17 +48,19 @@ public class ResultServiceStack extends Stack {
         resultQueueUrl = queue.getQueueUrl();
 
         Vpc vpc = new Vpc(this, "result-service-vpc", VpcProps.builder()
-                .maxAzs(1)
+                .maxAzs(2)
                 .natGateways(1)
                 .build());
 
         DatabaseInstance resultDb = new DatabaseInstance(this, "result-database",
                 DatabaseInstanceProps.builder()
                         .engine(DatabaseInstanceEngine.postgres(PostgresInstanceEngineProps.builder()
-                                .version(PostgresEngineVersion.VER_13_7)
+                                .version(PostgresEngineVersion.VER_13_3)
                                 .build()))
-                        .instanceType(InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MICRO))
+                        .instanceType(InstanceType.of(InstanceClass.T3, InstanceSize.MICRO))
                         .vpc(vpc)
+                        .availabilityZone(vpc.getAvailabilityZones().get(0))
+                        .multiAz(false)
                         .allocatedStorage(200)
                         .databaseName(resultDatabaseName)
                         .credentials(Credentials.fromPassword(resultPostgresUsername, SecretValue.unsafePlainText(resultPostgresPass)))
@@ -119,7 +122,7 @@ public class ResultServiceStack extends Stack {
 
         Map<String, Object> cfnProps = new HashMap<>();
         cfnProps.put("Name", "V2 vpc link result-service");
-        cfnProps.put("SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId));
+        cfnProps.put("SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId).collect(Collectors.toList()));
 
         CfnResource httpVpcLink = new CfnResource(this, "HttpVpcLinkResult", CfnResourceProps.builder()
                 .type("AWS::ApiGatewayV2::VpcLink")

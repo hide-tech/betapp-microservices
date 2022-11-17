@@ -14,6 +14,7 @@ import software.constructs.Construct;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OrderServiceStack extends Stack {
 
@@ -41,18 +42,20 @@ public class OrderServiceStack extends Stack {
         super(scope, id, props);
 
         Vpc vpc = new Vpc(this, "order-service-vpc", VpcProps.builder()
-                .maxAzs(1)
+                .maxAzs(2)
                 .natGateways(1)
                 .build());
 
         DatabaseInstance orderDb = new DatabaseInstance(this, "order-database",
                 DatabaseInstanceProps.builder()
                         .engine(DatabaseInstanceEngine.postgres(PostgresInstanceEngineProps.builder()
-                                .version(PostgresEngineVersion.VER_13_7)
+                                .version(PostgresEngineVersion.VER_13_3)
                                 .build()))
-                        .instanceType(InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MICRO))
+                        .instanceType(InstanceType.of(InstanceClass.T3, InstanceSize.MICRO))
                         .vpc(vpc)
+                        .availabilityZone(vpc.getAvailabilityZones().get(0))
                         .allocatedStorage(200)
+                        .multiAz(false)
                         .databaseName(orderDatabaseName)
                         .credentials(Credentials.fromPassword(orderPostgresUsername, SecretValue.unsafePlainText(orderPostgresPass)))
                         .build());
@@ -113,7 +116,7 @@ public class OrderServiceStack extends Stack {
 
         Map<String, Object> cfnProps = new HashMap<>();
         cfnProps.put("Name", "V2 vpc link order-service");
-        cfnProps.put("SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId));
+        cfnProps.put("SubnetIds", vpc.getPrivateSubnets().stream().map(ISubnet::getSubnetId).collect(Collectors.toList()));
 
         CfnResource httpVpcLink = new software.amazon.awscdk.CfnResource(this, "HttpVpcLinkOrder", CfnResourceProps.builder()
                 .type("AWS::ApiGatewayV2::VpcLink")
