@@ -2,12 +2,9 @@ spring:
   application:
     name: payment-service
 cloud:
-  aws:
-    access-key:
-    secret-key:
-    region:
-    dynamo:
-      endpoint:
-    queue:
-      receive-endpoint:
-      send-endpoint:
+  access-key:
+  secret-key:
+  region:
+  dynamo-url:
+  receive-queue:
+  distinct-queue:
