@@ -17,16 +17,12 @@ spring:
       user: 'postgres2'
       password: 'postgres2'
 cloud:
-  aws:
-    credentials:
-      access-key:
-      secret-key:
-    region:
-      static: 'us-east-1'
-    end-points:
-      url-send-customer:
-      url-send-odd:
-      url-send-payment:
-      url-send-result:
-      url-receive:
+  access-key:
+  secret-key:
+  region:
+  customer-queue:
+  odd-queue:
+  payment-queue:
+  result-queue:
+  receive-queue:
 

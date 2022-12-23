@@ -1,5 +1,6 @@
 package com.yazykov.sportbet.orderservice.saga;
 
+import com.yazykov.sportbet.orderservice.config.AWSParemeters;
 import com.yazykov.sportbet.orderservice.domain.Order;
 import com.yazykov.sportbet.orderservice.domain.OrderDetail;
 import com.yazykov.sportbet.orderservice.domain.OrderStatus;
@@ -10,7 +11,6 @@ import com.yazykov.sportbet.orderservice.mapper.CreditCardMapper;
 import com.yazykov.sportbet.orderservice.mapper.OrderDetailMapper;
 import com.yazykov.sportbet.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.aws.messaging.core.QueueMessagingTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -25,23 +25,16 @@ public class SagaManager {
     private final CreditCardMapper creditCardMapper;
     private final OrderRepository orderRepository;
     private final OrderDetailMapper orderDetailMapper;
-    @Value("${cloud.aws.end-points.url-send-customer}")
-    private String endpointCustomer;
-    @Value("${cloud.aws.end-points.url-send-odd}")
-    private String endpointOdd;
-    @Value("${cloud.aws.end-points.url-send-payment}")
-    private String endpointPayment;
-    @Value("${cloud.aws.end-points.url-send-result}")
-    private String endpointResult;
+    private final AWSParemeters paremeters;
 
     public String startOrderSaga(OrderDetail orderDetail){
         OrderInfoOdd oio = new OrderInfoOdd(orderDetail.getOrderId(),
                 orderDetail.getEventId(), orderDetail.getCustomerId());
         Message<OrderInfoOdd> message = MessageBuilder.withPayload(oio)
-                .setHeader("message-group-id", orderDetail.getCustomerId())
+                .setHeader("message-group-id", "OddQueue")
                 .setHeader("message-deduplication-id", orderDetail.getOrderId())
                 .build();
-        queueMessagingTemplate.send(endpointOdd, message);
+        queueMessagingTemplate.send(paremeters.oddQueue(), message);
         return "Successfully order created";
     }
 
@@ -57,10 +50,10 @@ public class SagaManager {
         OrderInfo oi = new OrderInfo(order.getOrderDetail().getCustomerId(),
                 order.getOrderDetail().getCardId(), order.getOrderDetail().getOrderId());
         Message<OrderInfo> message = MessageBuilder.withPayload(oi)
-                .setHeader("message-group-id", order.getOrderDetail().getCustomerId())
+                .setHeader("message-group-id", "CustomerQueue")
                 .setHeader("message-deduplication-id", order.getOrderDetail().getOrderId())
                 .build();
-        queueMessagingTemplate.send(endpointCustomer, message);
+        queueMessagingTemplate.send(paremeters.customerQueue(), message);
         return "Successfully Approved by odd-service";
     }
 
@@ -78,10 +71,10 @@ public class SagaManager {
                 creditCardMapper.credirCardApiDtoToCreditCardDto(cpi.getCreditCard()),
                 order.getOrderDetail().getAmount());
         Message<InfoFromOrderService> message = MessageBuilder.withPayload(ifos)
-                .setHeader("message-group-id", order.getOrderDetail().getCustomerId())
+                .setHeader("message-group-id", "PaymentQueue")
                 .setHeader("message-deduplication-id", order.getOrderDetail().getOrderId())
                 .build();
-        queueMessagingTemplate.send(endpointPayment, message);
+        queueMessagingTemplate.send(paremeters.paymentQueue(), message);
         return "Successfully Approved by customer-service";
     }
 
@@ -94,10 +87,10 @@ public class SagaManager {
         orderRepository.save(order);
         OrderDetailDto odd = orderDetailMapper.orderDetailToOrderDetailDto(order.getOrderDetail());
         Message<OrderDetailDto> message = MessageBuilder.withPayload(odd)
-                .setHeader("message-group-id", order.getOrderDetail().getCustomerId())
+                .setHeader("message-group-id", "ResultQueue")
                 .setHeader("message-deduplication-id", order.getOrderDetail().getOrderId())
                 .build();
-        queueMessagingTemplate.send(endpointResult, message);
+        queueMessagingTemplate.send(paremeters.resultQueue(), message);
         return "Successfully Approved by payment-service";
     }
 
