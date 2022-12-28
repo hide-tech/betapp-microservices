@@ -94,12 +94,12 @@ public class ParameterStoreStack extends Stack {
                 .build());
 
         new StringParameter(this, "odd-service-sqs-send", StringParameterProps.builder()
-                .parameterName("/config/odds-service/cloud.aws.end-point.url-send")
+                .parameterName("/config/odds-service/cloud.distinct-queue")
                 .stringValue(scheduleServiceStack.orderQueueUrl)
                 .build());
 
         new StringParameter(this, "odd-service-sqs-receive", StringParameterProps.builder()
-                .parameterName("/config/odds-service/cloud.aws.end-point.url-receive")
+                .parameterName("/config/odds-service/cloud.receive-queue")
                 .stringValue(oddsServiceStack.oddsQueueUrl)
                 .build());
 
@@ -135,28 +135,28 @@ public class ParameterStoreStack extends Stack {
                 .build());
 
         new StringParameter(this, "custom-service-sqs-send", StringParameterProps.builder()
-                .parameterName("/config/customer-service/cloud.aws.end-point.url-send")
+                .parameterName("/config/customer-service/cloud.distinct-queue")
                 .stringValue(scheduleServiceStack.orderQueueUrl)
                 .build());
 
         new StringParameter(this, "custom-service-sqs-receive", StringParameterProps.builder()
-                .parameterName("/config/customer-service/cloud.aws.end-point.url-receive")
+                .parameterName("/config/customer-service/cloud.receive-queue")
                 .stringValue(customerServiceStack.customerQueueUrl)
                 .build());
 
         //payment-service env params
         new StringParameter(this, "pay-service-dynamo-table", StringParameterProps.builder()
-                .parameterName("/config/payment-service/cloud.aws.dynamo.endpoint")
+                .parameterName("/config/payment-service/cloud.dynamo-url")
                 .stringValue(paymentServiceStack.dynamoTableEndpoint)
                 .build());
 
         new StringParameter(this, "pay-service-sqs-send", StringParameterProps.builder()
-                .parameterName("/config/payment-service/cloud.aws.end-point.url-send")
+                .parameterName("/config/payment-service/cloud.distinct-queue")
                 .stringValue(scheduleServiceStack.orderQueueUrl)
                 .build());
 
         new StringParameter(this, "pay-service-sqs-receive", StringParameterProps.builder()
-                .parameterName("/config/payment-service/cloud.aws.end-point.url-receive")
+                .parameterName("/config/payment-service/cloud.receive-queue")
                 .stringValue(paymentServiceStack.paymentQueueUrl)
                 .build());
 
@@ -192,12 +192,12 @@ public class ParameterStoreStack extends Stack {
                 .build());
 
         new StringParameter(this, "res-service-sqs-send", StringParameterProps.builder()
-                .parameterName("/config/result-service/cloud.aws.end-point.url-send")
+                .parameterName("/config/result-service/cloud.distinct-queue")
                 .stringValue(scheduleServiceStack.orderQueueUrl)
                 .build());
 
         new StringParameter(this, "res-service-sqs-receive", StringParameterProps.builder()
-                .parameterName("/config/result-service/cloud.aws.end-point.url-receive")
+                .parameterName("/config/result-service/cloud.receive-queue")
                 .stringValue(resultServiceStack.resultQueueUrl)
                 .build());
 
@@ -233,27 +233,27 @@ public class ParameterStoreStack extends Stack {
                 .build());
 
         new StringParameter(this, "order-service-sqs-receive", StringParameterProps.builder()
-                .parameterName("/config/order-service/cloud.aws.end-points.url-receive")
+                .parameterName("/config/order-service/cloud.receive-queue")
                 .stringValue(scheduleServiceStack.orderQueueUrl)
                 .build());
 
         new StringParameter(this, "order-service-sqs-send-odds", StringParameterProps.builder()
-                .parameterName("/config/order-service/cloud.aws.end-points.url-send-odd")
+                .parameterName("/config/order-service/cloud.odd-queue")
                 .stringValue(oddsServiceStack.oddsQueueUrl)
                 .build());
 
         new StringParameter(this, "order-service-sqs-send-customer", StringParameterProps.builder()
-                .parameterName("/config/order-service/cloud.aws.end-points.url-send-customer")
+                .parameterName("/config/order-service/cloud.customer-queue")
                 .stringValue(customerServiceStack.customerQueueUrl)
                 .build());
 
         new StringParameter(this, "order-service-sqs-send-payment", StringParameterProps.builder()
-                .parameterName("/config/order-service/cloud.aws.end-points.url-send-payment")
+                .parameterName("/config/order-service/cloud.payment-queue")
                 .stringValue(paymentServiceStack.paymentQueueUrl)
                 .build());
 
         new StringParameter(this, "order-service-sqs-send-result", StringParameterProps.builder()
-                .parameterName("/config/order-service/cloud.aws.end-points.url-send-result")
+                .parameterName("/config/order-service/cloud.result-queue")
                 .stringValue(resultServiceStack.resultQueueUrl)
                 .build());
     }
